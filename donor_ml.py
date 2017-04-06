@@ -21,6 +21,7 @@ data = pd.read_csv("census.csv")
 # Success - Display the first record
 print(data.head(n=10))
 print(type(data))
+print(type(data['income'][0]))
 
 #Total number of records
 n_records = len(data.index)
@@ -47,6 +48,7 @@ print("Percentage of individuals making more than $50,000: {:.2f}%".format(great
 # Split the data into features and target label
 income_raw = data['income']
 features_raw = data.drop('income', axis = 1)
+print(type(income_raw))
 
 # Visualize skewed continuous features of original data
 vs.distribution(data)
@@ -73,8 +75,14 @@ display(features_raw.head(n = 1))
 features = pd.get_dummies(features_raw)
 
 # Encode the 'income_raw' data to numerical values
-income = [0 if value == '<=50K' else 1 for value in income_raw]
+
+
+income = income_raw.apply(lambda x: 1 if x == ">50K" else 0)
 print(income[1:10])
+print(type(income))
+
+# income = [0 if value == '<=50K' else 1 for value in income_raw]
+
 
 # Print the number of features after one-hot encoding
 encoded = list(features.columns)
@@ -93,16 +101,19 @@ X_train, X_test, y_train, y_test = train_test_split(features, income, test_size 
 print("Training set has {} samples.".format(X_train.shape[0]))
 print("Testing set has {} samples.".format(X_test.shape[0]))
 
+print(X_train.head(n=2))
+print(y_train)
 
 from sklearn.metrics import accuracy_score
 
 test_sample_size = X_test.shape[0]
-all_greater_50k = [0]*(test_sample_size)
+all_greater_50k = [1]*(test_sample_size)
 print(len(all_greater_50k))
 
 # Calculate accuracy
-accuracy = accuracy_score(all_greater_50k, y_test)
+accuracy = float(accuracy_score(all_greater_50k, y_test))
 print("Naive Predictor has accuracy: ", accuracy)
+print(type(accuracy))
 
 # Calculate precision with true positives/(true positives + false positives)
 # Calculate recall with true positives/(true positives + false negatives)
@@ -115,13 +126,17 @@ print(precision)
 false_negatives = 0
 recall = true_positives/(true_positives + false_negatives)
 print(recall)
+print(type(recall))
 
 # Calculate F-score using the formula above for beta = 0.5
 beta = 0.5
-fscore = (1+beta**2)*((precision*recall)/((beta**2*precision)+recall))
+fscore = float((1+beta**2)*((precision*recall)/((beta**2*precision)+recall)))
+print(type(fscore))
 
 # Print the results
 print("Naive Predictor: [Accuracy score: {:.4f}, F-score: {:.4f}]".format(accuracy, fscore))
+
+
 
 # Import one metric from sklearn - fbeta_score
 from sklearn.metrics import fbeta_score
@@ -144,24 +159,25 @@ def train_predict(learner, sample_size, X_train, y_train, X_test, y_test):
     learner = learner.fit(X_train[:sample_size], y_train[:sample_size])
     end = time() # Get end time
     
+    
     # Calculate the training time
     results['train_time'] = end - start
         
     # Get the predictions on the test set,
     # then get predictions on the first 300 training samples
     start = time() # Get start time
-    predictions_test = learner.predict(y_test)
-    predictions_train = learner.predict(y_train[:300])
+    predictions_test = learner.predict(X_test)
+    predictions_train = learner.predict(X_train[:300])
     end = time() # Get end time
     
     # Calculate the total prediction time
     results['pred_time'] = end - start
             
     # Compute accuracy on the first 300 training samples
-    results['acc_train'] = learner.score(y_train[:300], predictions_train)
+    results['acc_train'] = accuracy_score(y_train[:300], predictions_train)
         
     # Compute accuracy on test set
-    results['acc_test'] = learner.score(y_test, predictions_test)
+    results['acc_test'] = accuracy_score(y_test, predictions_test)
     
     # Compute F-score on the the first 300 training samples
     results['f_train'] = fbeta_score(y_train[:300], predictions_train, average=None, beta=0.5)
@@ -177,15 +193,16 @@ def train_predict(learner, sample_size, X_train, y_train, X_test, y_test):
 
 # Import the three supervised learning models from sklearn
 from sklearn.naive_bayes import GaussianNB
-from sklearn.ensemble import RandomForestClassifier
-from sklearn import linear_model
+from sklearn.svm import SVC
+from sklearn.ensemble import AdaBoostClassifier
 
-# Initialize the three models
+# TODO: Initialize the three models
 clf_A = GaussianNB()
-clf_B = RandomForestClassifier(n_estimators=10, max_depth=None, min_samples_split=2, random_state=0)
-clf_C = linear_model.SGDClassifier(loss="log")
+clf_B = SVC(random_state=0)
+clf_C = AdaBoostClassifier(random_state=0)
 
 # Calculate the number of samples for 1%, 10%, and 100% of the training data
+
 samples_1 = len(X_train.sample(frac=1/100))
 print(samples_1)
 samples_10 = len(X_train.sample(frac=10/100))
@@ -193,9 +210,15 @@ print(samples_10)
 samples_100 = len(X_train.index)
 print(samples_100)
 
+"""
+samples_1 = int(round(X_train.shape[0] * .01))
+samples_10 = int(round(X_train.shape[0] * .1))
+samples_100 = X_train.shape[0]
+"""
+
 # Collect results on the learners
 results = {}
-for clf in [clf_A, clf_B, clf_C]:
+for clf in [clf_B, clf_C]:
     clf_name = clf.__class__.__name__
     results[clf_name] = {}
     for i, samples in enumerate([samples_1, samples_10, samples_100]):
