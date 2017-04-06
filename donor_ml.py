@@ -75,13 +75,10 @@ display(features_raw.head(n = 1))
 features = pd.get_dummies(features_raw)
 
 # Encode the 'income_raw' data to numerical values
-
-
-income = income_raw.apply(lambda x: 1 if x == ">50K" else 0)
+income = [0 if value == '<=50K' else 1 for value in income_raw]
 print(income[1:10])
 print(type(income))
 
-# income = [0 if value == '<=50K' else 1 for value in income_raw]
 
 
 # Print the number of features after one-hot encoding
@@ -180,26 +177,32 @@ def train_predict(learner, sample_size, X_train, y_train, X_test, y_test):
     results['acc_test'] = accuracy_score(y_test, predictions_test)
     
     # Compute F-score on the the first 300 training samples
-    results['f_train'] = fbeta_score(y_train[:300], predictions_train, average=None, beta=0.5)
+    results['f_train'] = fbeta_score(y_train[:300], predictions_train, average='binary', beta=0.5)
         
     # Compute F-score on the test set
-    results['f_test'] = fbeta_score(y_test, predictions_test, average=None, beta=0.5)
+    results['f_test'] = fbeta_score(y_test, predictions_test, average='binary', beta=0.5)
        
     # Success
     print("{} trained on {} samples.".format(learner.__class__.__name__, sample_size))
+    print(results['pred_time'])  
+    print(results['train_time'])     
+    print(results['acc_train'])
+    print(results['acc_test'])
+    print(results['f_train'])
+    print(results['f_test'])
         
     # Return the results
     return results
 
 # Import the three supervised learning models from sklearn
 from sklearn.naive_bayes import GaussianNB
-from sklearn.svm import SVC
-from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn import linear_model
 
-# TODO: Initialize the three models
+# Initialize the three models
 clf_A = GaussianNB()
-clf_B = SVC(random_state=0)
-clf_C = AdaBoostClassifier(random_state=0)
+clf_B = RandomForestClassifier(random_state=0)
+clf_C = linear_model.SGDClassifier(loss="log", random_state=0)
 
 # Calculate the number of samples for 1%, 10%, and 100% of the training data
 
@@ -210,15 +213,9 @@ print(samples_10)
 samples_100 = len(X_train.index)
 print(samples_100)
 
-"""
-samples_1 = int(round(X_train.shape[0] * .01))
-samples_10 = int(round(X_train.shape[0] * .1))
-samples_100 = X_train.shape[0]
-"""
-
 # Collect results on the learners
 results = {}
-for clf in [clf_B, clf_C]:
+for clf in [clf_A, clf_B, clf_C]:
     clf_name = clf.__class__.__name__
     results[clf_name] = {}
     for i, samples in enumerate([samples_1, samples_10, samples_100]):
@@ -227,3 +224,19 @@ for clf in [clf_B, clf_C]:
 
 # Run metrics visualization for the three supervised learning models chosen
 vs.evaluate(results, accuracy, fscore)
+
+
+# PARKING LOT
+# income = income_raw.apply(lambda x: 1 if x == ">50K" else 0)
+
+# Import the three supervised learning models from sklearn
+# from sklearn.naive_bayes import GaussianNB
+# from sklearn.svm import SVC
+# from sklearn.ensemble import AdaBoostClassifier
+
+# TODO: Initialize the three models
+# clf_A = GaussianNB()
+# clf_B = SVC(random_state=0)
+# clf_C = AdaBoostClassifier(random_state=0)
+
+
