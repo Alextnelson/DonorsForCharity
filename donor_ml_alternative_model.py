@@ -229,10 +229,10 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import make_scorer
 
 # Initialize the classifier
-clf = RandomForestClassifier(random_state=0)
+clf = linear_model.SGDClassifier(loss="log", random_state=0)
 
 # Create the parameters list you wish to tune
-parameters = {'n_estimators':[50, 100, 150, 200]}
+parameters = {'alpha':[0.0001, 0.001, 0.01, 0.1, 0.5]}
 
 # Make an fbeta_score scoring object
 scorer = make_scorer(fbeta_score, beta=0.5)
