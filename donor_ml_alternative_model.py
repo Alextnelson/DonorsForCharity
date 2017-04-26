@@ -100,42 +100,18 @@ print("Testing set has {} samples.".format(X_test.shape[0]))
 print(X_train.head(n=2))
 print(y_train)
 
-from sklearn.metrics import accuracy_score
-
-test_sample_size = X_test.shape[0]
-all_greater_50k = [1]*(test_sample_size)
-print(len(all_greater_50k))
-
 # Calculate accuracy
-accuracy = float(accuracy_score(all_greater_50k, y_test))
-print("Naive Predictor has accuracy: ", accuracy)
-print(type(accuracy))
-
-# Calculate precision with true positives/(true positives + false positives)
-# Calculate recall with true positives/(true positives + false negatives)
-# Keep in mind that precision is accuracy restated & recall is 1 since the Naive model identifies all as income >50K
-true_positives = accuracy * test_sample_size
-print(true_positives)
-false_positives = test_sample_size - true_positives
-precision = true_positives/(true_positives + false_positives)
-print(precision)
-false_negatives = 0
-recall = true_positives/(true_positives + false_negatives)
-print(recall)
-print(type(recall))
+accuracy = greater_percent/100
 
 # Calculate F-score using the formula above for beta = 0.5
 beta = 0.5
-fscore = float((1+beta**2)*((precision*recall)/((beta**2*precision)+recall)))
-print(type(fscore))
+fscore = (1+beta**2)*accuracy/(beta**2*accuracy+1)
 
 # Print the results
 print("Naive Predictor: [Accuracy score: {:.4f}, F-score: {:.4f}]".format(accuracy, fscore))
 
-
-
 # Import one metric from sklearn - fbeta_score
-from sklearn.metrics import fbeta_score
+from sklearn.metrics import fbeta_score, accuracy_score
 
 def train_predict(learner, sample_size, X_train, y_train, X_test, y_test): 
     '''
